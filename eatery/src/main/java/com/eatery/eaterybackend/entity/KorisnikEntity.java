@@ -38,8 +38,4 @@ public class KorisnikEntity {
 
     @Column(name = "suspendovan_do")
     private LocalDateTime suspendovanDo;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_slike")
-    private SlikaEntity slika;
 }

@@ -23,3 +23,28 @@ CREATE TABLE IF NOT EXISTS `eatery_db`.`recenzija` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
+
+-- 16.11.2026: uklonjena kolona narudzba.id_klijenta (duplikat kolone id_restorana).
+
+ALTER TABLE `eatery_db`.`narudzba` DROP COLUMN `id_klijenta`;
+
+-- 16.11.2026: uklonjene tabele ponuda i slika i kolona narudzba.id_ponude (nisu se koristile u kodu).
+-- Pokrenuti nakon povlačenja koda bez SlikaEntity, PonudaEntity, PonudaRepository i polja idPonude
+-- u NarudzbaEntity, i nakon restarta backenda.
+ALTER TABLE `eatery_db`.`narudzba` DROP COLUMN `id_ponude`;
+DROP TABLE `eatery_db`.`ponuda`;
+
+-- Kolona korisnik.id_slike ima strani ključ prema tabeli slika.
+SET @fk_slika = (
+  SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+  WHERE TABLE_SCHEMA = 'eatery_db' AND TABLE_NAME = 'korisnik'
+    AND COLUMN_NAME = 'id_slike' AND REFERENCED_TABLE_NAME = 'slika'
+  LIMIT 1
+);
+SET @upit = CONCAT('ALTER TABLE `eatery_db`.`korisnik` DROP FOREIGN KEY `', @fk_slika, '`');
+PREPARE naredba FROM @upit;
+EXECUTE naredba;
+DEALLOCATE PREPARE naredba;
+
+ALTER TABLE `eatery_db`.`korisnik` DROP COLUMN `id_slike`;
+DROP TABLE `eatery_db`.`slika`;
