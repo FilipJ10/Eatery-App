@@ -216,14 +216,15 @@ const KlijentProfil = ({ user, isActive = true }) => {
             });
 
             // Ažuriranje lokalnih stanja odgovorom iz baze
-            setProfil({
+            setProfil(prev => ({
+                email: res.data.email || prev.email,
                 nazivObjekta: res.data.nazivObjekta || nazivObjekta,
                 adresa: res.data.adresa,
                 lat: res.data.lat,
                 lng: res.data.lng,
                 radnoVrijemeOd: res.data.radnoVrijemeOd || '',
                 radnoVrijemeDo: res.data.radnoVrijemeDo || ''
-            });
+            }));
             setNazivObjekta(res.data.nazivObjekta || nazivObjekta);
             setRadnoVrijemeOd(res.data.radnoVrijemeOd || '');
             setRadnoVrijemeDo(res.data.radnoVrijemeDo || '');
@@ -271,7 +272,7 @@ const KlijentProfil = ({ user, isActive = true }) => {
                         </div>
                         <div>
                             <span>Email</span>
-                            <strong>{korisnikInfo.email || 'Nije unesen'}</strong>
+                            <strong>{profil.email || korisnikInfo.email || 'Nije unesen'}</strong>
                         </div>
                         <div>
                             <span>Naziv objekta</span>

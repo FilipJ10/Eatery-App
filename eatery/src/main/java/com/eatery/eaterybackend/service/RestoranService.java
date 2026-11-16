@@ -295,6 +295,7 @@ public class RestoranService {
     private Map<String, Object> profilMap(KlijentEntity klijent) {
         Map<String, Object> response = new HashMap<>();
         response.put("id", klijent.getId());
+        response.put("email", klijent.getEmail());
         response.put("nazivObjekta", klijent.getNazivObjekta());
         response.put("adresa", klijent.getAdresa());
         response.put("lat", klijent.getLat());
