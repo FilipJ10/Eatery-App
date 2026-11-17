@@ -290,7 +290,15 @@ function KupacPanel({ user, onLogout, onUserUpdate }) {
         );
     };
 
-    const ukupnaCijenaKorpe = korpa.reduce((sum, item) => sum + item.jelo.cijena * item.kolicina, 0);
+    const cijenaArtikla = (jelo) => {
+        if (!jelo) return 0;
+        if (jelo.popustAktivan || jelo.popustAktivan === true) {
+            return Number(jelo.efektivnaCijena != null ? jelo.efektivnaCijena : jelo.cijena) || 0;
+        }
+        return Number(jelo.cijena || jelo.akcijskaCijena || 0) || 0;
+    };
+
+    const ukupnaCijenaKorpe = korpa.reduce((sum, item) => sum + cijenaArtikla(item.jelo) * item.kolicina, 0);
     const brojArtikala = korpa.reduce((sum, item) => sum + item.kolicina, 0);
     const korpaSamoVrecice = korpa.length > 0 && korpa.every(item => jeVrecicaId(item.jelo.id));
     const korpaSamoJela = korpa.length > 0 && korpa.every(item => !jeVrecicaId(item.jelo.id));
@@ -327,7 +335,9 @@ function KupacPanel({ user, onLogout, onUserUpdate }) {
             }
 
             const konvertovanId = Number(siroviId);
-            const cijena = artikal.cijena || artikal.akcijskaCijena || 0;
+            const cijena = (artikal.popustAktivan || artikal.popustAktivan === true)
+                ? (artikal.efektivnaCijena != null ? artikal.efektivnaCijena : artikal.cijena)
+                : (artikal.cijena || artikal.akcijskaCijena || 0);
 
             return {
                 jeloId: !isNaN(konvertovanId) ? konvertovanId : null,
@@ -829,7 +839,23 @@ function KupacPanel({ user, onLogout, onUserUpdate }) {
                                                                 <div className="food-details">
                                                                     <h3>{j.naziv}</h3>
                                                                     <p>{j.opis || 'Ukusno pripremljeno jelo.'}</p>
-                                                                    <strong className="food-price">{Number(j.cijena).toFixed(2)} KM</strong>
+                                                                    <strong className="food-price">
+                                                                      {(j.popustAktivan || j.popustAktivan === true) ? (
+                                                                        <>
+                                                                          <span style={{ textDecoration: "line-through", opacity: 0.55, marginRight: 6 }}>
+                                                                            {Number(j.cijena).toFixed(2)}
+                                                                          </span>
+                                                                          <span style={{ color: "#c2410c" }}>
+                                                                            {Number(j.efektivnaCijena != null ? j.efektivnaCijena : j.cijena).toFixed(2)} KM
+                                                                            {j.popustProcenat != null && (
+                                                                              <span style={{ fontSize: "0.8em", marginLeft: 3 }}>(-{Number(j.popustProcenat)}%)</span>
+                                                                            )}
+                                                                          </span>
+                                                                        </>
+                                                                      ) : (
+                                                                        <>{Number(j.cijena).toFixed(2)} KM</>
+                                                                      )}
+                                                                    </strong>
                                                                 </div>
                                                                 {uKorpi > 0 ? (
                                                                     <div className="quantity-control" aria-label={`Količina za ${j.naziv}`}>
@@ -894,7 +920,7 @@ function KupacPanel({ user, onLogout, onUserUpdate }) {
                                                         </span>
                                                         <div className="cart-item-info">
                                                             <h3>{item.jelo.naziv.replace(/^🎁\s*/, '')}</h3>
-                                                            <span>{Number(item.jelo.cijena).toFixed(2)} KM / kom</span>
+                                                            <span>{Number(cijenaArtikla(item.jelo)).toFixed(2)} KM / kom</span>
                                                             <div className="cart-item-bottom">
                                                                 <div className="quantity-control small">
                                                                     <button type="button" onClick={() => smanjiKolicinu(item.jelo.id)} aria-label="Smanji količinu">
@@ -905,7 +931,7 @@ function KupacPanel({ user, onLogout, onUserUpdate }) {
                                                                         <Plus size={13} />
                                                                     </button>
                                                                 </div>
-                                                                <strong>{(item.jelo.cijena * item.kolicina).toFixed(2)} KM</strong>
+                                                                <strong>{(cijenaArtikla(item.jelo) * item.kolicina).toFixed(2)} KM</strong>
                                                             </div>
                                                         </div>
                                                         <button

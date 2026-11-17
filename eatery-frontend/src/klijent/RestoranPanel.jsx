@@ -80,6 +80,9 @@ const RestoranPanel = ({ restoranId, user, onLogout }) => {
     opis: "",
     cijena: "",
     kategorijaId: "",
+    popustProcenat: "",
+    popustOd: "",
+    popustDo: "",
   });
 
   // Izmjena postojećeg jela / vrećice koristi iste forme kao dodavanje
@@ -415,6 +418,15 @@ const RestoranPanel = ({ restoranId, user, onLogout }) => {
       opis: novoJelo.opis,
       cijena: parseFloat(novoJelo.cijena),
       kategorijaId: parseInt(novoJelo.kategorijaId, 10),
+      popustProcenat: novoJelo.popustProcenat !== "" && novoJelo.popustProcenat != null
+        ? parseFloat(novoJelo.popustProcenat)
+        : null,
+      popustOd: novoJelo.popustOd
+        ? (novoJelo.popustOd.length === 16 ? novoJelo.popustOd + ":00" : novoJelo.popustOd)
+        : null,
+      popustDo: novoJelo.popustDo
+        ? (novoJelo.popustDo.length === 16 ? novoJelo.popustDo + ":00" : novoJelo.popustDo)
+        : null,
     };
 
     try {
@@ -444,12 +456,30 @@ const RestoranPanel = ({ restoranId, user, onLogout }) => {
     }
   };
 
+  const formatZaDatetimeLocal = (vrijednost) => {
+    if (!vrijednost) return "";
+    // Backend šalje "2026-11-17T14:30:00" ili niz
+    let d;
+    if (Array.isArray(vrijednost)) {
+      const [g, mj, dan, h = 0, min = 0] = vrijednost;
+      d = new Date(g, mj - 1, dan, h, min);
+    } else {
+      d = new Date(vrijednost);
+    }
+    if (isNaN(d)) return "";
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
   const zapocniIzmjenuJela = (jelo) => {
     setNovoJelo({
       naziv: jelo.naziv || "",
       opis: jelo.opis || "",
       cijena: jelo.cijena != null ? String(jelo.cijena) : "",
       kategorijaId: jelo.kategorija?.id || kategorije[0]?.id || "",
+      popustProcenat: jelo.popustProcenat != null ? String(jelo.popustProcenat) : "",
+      popustOd: formatZaDatetimeLocal(jelo.popustOd),
+      popustDo: formatZaDatetimeLocal(jelo.popustDo),
     });
     setUrediJeloId(jelo.id);
     jeloFormaRef.current?.scrollIntoView({
@@ -464,6 +494,9 @@ const RestoranPanel = ({ restoranId, user, onLogout }) => {
       opis: "",
       cijena: "",
       kategorijaId: kategorije[0]?.id || "",
+      popustProcenat: "",
+      popustOd: "",
+      popustDo: "",
     });
     setUrediJeloId(null);
   };
@@ -1896,6 +1929,59 @@ const RestoranPanel = ({ restoranId, user, onLogout }) => {
                     required
                   />
 
+                  <label>Popust (%)</label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    max="100"
+                    placeholder="npr. 20 (ostavite prazno ako nema popusta)"
+                    value={novoJelo.popustProcenat}
+                    onChange={(e) =>
+                      setNovoJelo({
+                        ...novoJelo,
+                        popustProcenat: e.target.value,
+                      })
+                    }
+                  />
+
+                  <label>Popust važi od</label>
+                  <input
+                    type="datetime-local"
+                    value={novoJelo.popustOd}
+                    onChange={(e) =>
+                      setNovoJelo({
+                        ...novoJelo,
+                        popustOd: e.target.value,
+                      })
+                    }
+                  />
+
+                  <label>Popust važi do</label>
+                  <input
+                    type="datetime-local"
+                    value={novoJelo.popustDo}
+                    onChange={(e) =>
+                      setNovoJelo({
+                        ...novoJelo,
+                        popustDo: e.target.value,
+                      })
+                    }
+                  />
+
+                  {novoJelo.popustProcenat &&
+                    parseFloat(novoJelo.popustProcenat) > 0 &&
+                    novoJelo.cijena && (
+                      <p style={{ margin: "0.5rem 0", color: "#c2410c", fontWeight: 600 }}>
+                        Akcijska cijena:{" "}
+                        {(
+                          parseFloat(novoJelo.cijena) *
+                          (1 - parseFloat(novoJelo.popustProcenat) / 100)
+                        ).toFixed(2)}{" "}
+                        KM
+                      </p>
+                    )}
+
                   <button type="submit" className="primary-button">
                     <span>{urediJeloId ? "✓" : "+"}</span>
                     {urediJeloId ? "Sačuvaj izmjene" : "Sačuvaj jelo"}
@@ -1966,7 +2052,23 @@ const RestoranPanel = ({ restoranId, user, onLogout }) => {
                                 <h4>{jelo.naziv}</h4>
 
                                 <strong>
-                                  {Number(jelo.cijena || 0).toFixed(2)} KM
+                                  {jelo.popustAktivan || jelo.popustAktivan === true ? (
+                                    <>
+                                      <span style={{ textDecoration: "line-through", opacity: 0.6, marginRight: 8 }}>
+                                        {Number(jelo.cijena || 0).toFixed(2)} KM
+                                      </span>
+                                      <span style={{ color: "#c2410c" }}>
+                                        {Number(jelo.efektivnaCijena != null ? jelo.efektivnaCijena : jelo.cijena || 0).toFixed(2)} KM
+                                        {jelo.popustProcenat != null && (
+                                          <span style={{ fontSize: "0.85em", marginLeft: 4 }}>
+                                            (-{Number(jelo.popustProcenat)}%)
+                                          </span>
+                                        )}
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <>{Number(jelo.cijena || 0).toFixed(2)} KM</>
+                                  )}
                                 </strong>
                               </div>
 

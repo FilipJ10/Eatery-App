@@ -1,6 +1,7 @@
 package com.eatery.eaterybackend.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,6 @@ public class RestoranService {
     private final KlijentRepository klijentRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final KorisnikPristupService korisnikPristupService;
-    private final GeokodiranjeService geokodiranjeService;
 
     public RestoranService(KategorijaRepository kategorijaRepository,
                            JeloRepository jeloRepository,
@@ -52,8 +52,7 @@ public class RestoranService {
                            StavkaNazivResolver stavkaNazivResolver,
                            KlijentRepository klijentRepository,
                            SimpMessagingTemplate messagingTemplate,
-                           KorisnikPristupService korisnikPristupService,
-                           GeokodiranjeService geokodiranjeService) {
+                           KorisnikPristupService korisnikPristupService) {
         this.kategorijaRepository = kategorijaRepository;
         this.jeloRepository = jeloRepository;
         this.korisnikRepository = korisnikRepository;
@@ -63,7 +62,6 @@ public class RestoranService {
         this.klijentRepository = klijentRepository;
         this.messagingTemplate = messagingTemplate;
         this.korisnikPristupService = korisnikPristupService;
-        this.geokodiranjeService = geokodiranjeService;
     }
 
     @Transactional(readOnly = true)
@@ -102,6 +100,7 @@ public class RestoranService {
         jelo.setCijena(dto.getCijena());
         jelo.setKategorija(kat);
         jelo.setRestoran(restoran);
+        primijeniPopust(jelo, dto);
         return jeloRepository.save(jelo);
     }
 
@@ -127,6 +126,7 @@ public class RestoranService {
         jelo.setNaziv(dto.getNaziv().trim());
         jelo.setOpis(dto.getOpis());
         jelo.setCijena(dto.getCijena());
+        primijeniPopust(jelo, dto);
         return jeloRepository.save(jelo);
     }
 
@@ -277,13 +277,6 @@ public class RestoranService {
             String s = v != null ? v.toString().trim() : "";
             klijent.setRadnoVrijemeDo(s.isEmpty() ? null : s);
         }
-        if (klijent.getAdresa() != null && !klijent.getAdresa().isBlank()
-                && (klijent.getLat() == null || klijent.getLat() == 0
-                || klijent.getLng() == null || klijent.getLng() == 0)) {
-            GeokodiranjeService.Koordinate koordinate = geokodiranjeService.geokodiraj(klijent.getAdresa());
-            klijent.setLat(koordinate.lat());
-            klijent.setLng(koordinate.lng());
-        }
         return profilMap(klijentRepository.save(klijent));
     }
 
@@ -314,4 +307,39 @@ public class RestoranService {
         response.put("radnoVrijemeDo", klijent.getRadnoVrijemeDo());
         return response;
     }
+
+    /**
+     * Primjenjuje popust sa DTO-a na jelo.
+     * Ako je procenat null/0 ili nedostaju datumi, popust se briše.
+     */
+    private void primijeniPopust(JeloEntity jelo, JeloDTO dto) {
+        BigDecimal procenat = dto.getPopustProcenat();
+        if (procenat != null && procenat.signum() < 0) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Popust ne može biti negativan.");
+        }
+        if (procenat != null && procenat.compareTo(BigDecimal.valueOf(100)) > 0) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Popust ne može biti veći od 100%.");
+        }
+        LocalDateTime od = dto.getPopustOd();
+        LocalDateTime doV = dto.getPopustDo();
+        boolean imaPopust = procenat != null && procenat.signum() > 0;
+        if (imaPopust) {
+            if (od == null || doV == null) {
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                        "Za popust je potrebno unijeti period važenja (od – do).");
+            }
+            if (doV.isBefore(od)) {
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                        "Datum kraja popusta ne može biti prije početka.");
+            }
+            jelo.setPopustProcenat(procenat);
+            jelo.setPopustOd(od);
+            jelo.setPopustDo(doV);
+        } else {
+            jelo.setPopustProcenat(null);
+            jelo.setPopustOd(null);
+            jelo.setPopustDo(null);
+        }
+    }
+
 }
