@@ -1,20 +1,13 @@
 package com.eatery.eaterybackend.service;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
 import com.eatery.eaterybackend.dto.RestoranMapaDTO;
 import com.eatery.eaterybackend.dto.RestoranOcjenaDTO;
@@ -29,13 +22,16 @@ public class RestoranMapaService {
     private final KlijentRepository klijentRepository;
     private final RecenzijaService recenzijaService;
     private final KorisnikPristupService korisnikPristupService;
+    private final GeokodiranjeService geokodiranjeService;
 
     public RestoranMapaService(KlijentRepository klijentRepository,
                                RecenzijaService recenzijaService,
-                               KorisnikPristupService korisnikPristupService) {
+                               KorisnikPristupService korisnikPristupService,
+                               GeokodiranjeService geokodiranjeService) {
         this.klijentRepository = klijentRepository;
         this.recenzijaService = recenzijaService;
         this.korisnikPristupService = korisnikPristupService;
+        this.geokodiranjeService = geokodiranjeService;
     }
 
     @Transactional
@@ -50,28 +46,10 @@ public class RestoranMapaService {
 
         Double lat = dto.getLat();
         Double lng = dto.getLng();
-        if (lat == null || lng == null) {
-            try {
-                RestTemplate restTemplate = new RestTemplate();
-                String url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ba&q="
-                        + URLEncoder.encode(adresa.trim(), StandardCharsets.UTF_8);
-                HttpHeaders headers = new HttpHeaders();
-                headers.set("User-Agent", "EateryApp/1.0 (kontakt@eatery.ba)");
-                ResponseEntity<List> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), List.class);
-                if (response.getBody() != null && !response.getBody().isEmpty()) {
-                    Map<String, Object> prvaLokacija = (Map<String, Object>) response.getBody().get(0);
-                    lat = Double.parseDouble(prvaLokacija.get("lat").toString());
-                    lng = Double.parseDouble(prvaLokacija.get("lon").toString());
-                }
-            } catch (ApiException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Greška pri komunikaciji sa servisom za mape.");
-            }
-        }
-
-        if (lat == null || lng == null) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Unesena adresa nije pronađena na mapi. Molimo unesite tačnu adresu.");
+        if (lat == null || lng == null || lat == 0 || lng == 0) {
+            GeokodiranjeService.Koordinate koordinate = geokodiranjeService.geokodiraj(adresa);
+            lat = koordinate.lat();
+            lng = koordinate.lng();
         }
 
         if (klijentRepository.postojiKlijent(restoranId) > 0) {

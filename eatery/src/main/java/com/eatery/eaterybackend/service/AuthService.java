@@ -31,17 +31,20 @@ public class AuthService {
     private final OpisRepository opisRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
+    private final GeokodiranjeService geokodiranjeService;
 
     public AuthService(KorisnikRepository korisnikRepository,
                        ZahtjevZaAktivacijuRepository zahtjevRepository,
                        OpisRepository opisRepository,
                        PasswordEncoder passwordEncoder,
-                       JwtUtils jwtUtils) {
+                       JwtUtils jwtUtils,
+                       GeokodiranjeService geokodiranjeService) {
         this.korisnikRepository = korisnikRepository;
         this.zahtjevRepository = zahtjevRepository;
         this.opisRepository = opisRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtils = jwtUtils;
+        this.geokodiranjeService = geokodiranjeService;
     }
 
     @Transactional
@@ -95,6 +98,9 @@ public class AuthService {
         klijent.setAktiviran(false);
         klijent.setNazivObjekta(dto.getNazivObjekta().trim());
         klijent.setAdresa(dto.getAdresa().trim());
+        GeokodiranjeService.Koordinate koordinate = koordinateAdrese(dto);
+        klijent.setLat(koordinate.lat());
+        klijent.setLng(koordinate.lng());
         klijent.setRadnoVrijemeOd(dto.getRadnoVrijemeOd().trim());
         klijent.setRadnoVrijemeDo(dto.getRadnoVrijemeDo().trim());
 
@@ -112,6 +118,13 @@ public class AuthService {
         zahtjevRepository.save(zahtjev);
 
         return Map.of("message", "Zahtjev za registraciju restorana je poslat. Nalog čeka odobrenje administratora.");
+    }
+
+    private GeokodiranjeService.Koordinate koordinateAdrese(RegistracijaKlijentaDTO dto) {
+        if (dto.getLat() != null && dto.getLng() != null && dto.getLat() != 0 && dto.getLng() != 0) {
+            return new GeokodiranjeService.Koordinate(dto.getLat(), dto.getLng());
+        }
+        return geokodiranjeService.geokodiraj(dto.getAdresa());
     }
 
     @Transactional

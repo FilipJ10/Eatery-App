@@ -42,6 +42,7 @@ public class RestoranService {
     private final KlijentRepository klijentRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final KorisnikPristupService korisnikPristupService;
+    private final GeokodiranjeService geokodiranjeService;
 
     public RestoranService(KategorijaRepository kategorijaRepository,
                            JeloRepository jeloRepository,
@@ -51,7 +52,8 @@ public class RestoranService {
                            StavkaNazivResolver stavkaNazivResolver,
                            KlijentRepository klijentRepository,
                            SimpMessagingTemplate messagingTemplate,
-                           KorisnikPristupService korisnikPristupService) {
+                           KorisnikPristupService korisnikPristupService,
+                           GeokodiranjeService geokodiranjeService) {
         this.kategorijaRepository = kategorijaRepository;
         this.jeloRepository = jeloRepository;
         this.korisnikRepository = korisnikRepository;
@@ -61,6 +63,7 @@ public class RestoranService {
         this.klijentRepository = klijentRepository;
         this.messagingTemplate = messagingTemplate;
         this.korisnikPristupService = korisnikPristupService;
+        this.geokodiranjeService = geokodiranjeService;
     }
 
     @Transactional(readOnly = true)
@@ -273,6 +276,13 @@ public class RestoranService {
             Object v = body.get("radnoVrijemeDo");
             String s = v != null ? v.toString().trim() : "";
             klijent.setRadnoVrijemeDo(s.isEmpty() ? null : s);
+        }
+        if (klijent.getAdresa() != null && !klijent.getAdresa().isBlank()
+                && (klijent.getLat() == null || klijent.getLat() == 0
+                || klijent.getLng() == null || klijent.getLng() == 0)) {
+            GeokodiranjeService.Koordinate koordinate = geokodiranjeService.geokodiraj(klijent.getAdresa());
+            klijent.setLat(koordinate.lat());
+            klijent.setLng(koordinate.lng());
         }
         return profilMap(klijentRepository.save(klijent));
     }
