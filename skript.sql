@@ -1,3 +1,4 @@
+
 CREATE TABLE IF NOT EXISTS `eatery_db`.`recenzija` (
   `id_recenzije` BIGINT NOT NULL AUTO_INCREMENT,
   `ocjena` INT NOT NULL,                         

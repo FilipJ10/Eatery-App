@@ -9,7 +9,10 @@ function RegisterKlijent({ onSwitchToLogin }) {
         sifra: '',
         email: '',
         nazivObjekta: '',
-        opis: ''
+        opis: '',
+        adresa: '',
+        radnoVrijemeOd: '',
+        radnoVrijemeDo: ''
     });
 
     const [poruka, setPoruka] = useState('');
@@ -108,6 +111,41 @@ function RegisterKlijent({ onSwitchToLogin }) {
                             onChange={handleChange}
                             required
                         />
+                    </div>
+                    <div className="login-field">
+                        <label htmlFor="reg-k-adresa">Adresa</label>
+                        <input
+                            id="reg-k-adresa"
+                            name="adresa"
+                            placeholder="npr. Kralja Petra I 12, Banja Luka"
+                            value={formData.adresa}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
+                    <div className="login-hours">
+                        <div className="login-field">
+                            <label htmlFor="reg-k-od">Radno vrijeme od</label>
+                            <input
+                                id="reg-k-od"
+                                name="radnoVrijemeOd"
+                                type="time"
+                                value={formData.radnoVrijemeOd}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
+                        <div className="login-field">
+                            <label htmlFor="reg-k-do">Radno vrijeme do</label>
+                            <input
+                                id="reg-k-do"
+                                name="radnoVrijemeDo"
+                                type="time"
+                                value={formData.radnoVrijemeDo}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
                     </div>
                     <div className="login-field">
                         <label htmlFor="reg-k-opis">Kratak opis restorana (opciono)</label>

@@ -79,6 +79,13 @@ public class AuthService {
         if (dto.getNazivObjekta() == null || dto.getNazivObjekta().isBlank()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Naziv objekta je obavezan!");
         }
+        if (dto.getAdresa() == null || dto.getAdresa().isBlank()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Adresa je obavezna!");
+        }
+        if (dto.getRadnoVrijemeOd() == null || dto.getRadnoVrijemeOd().isBlank()
+                || dto.getRadnoVrijemeDo() == null || dto.getRadnoVrijemeDo().isBlank()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Radno vrijeme (od i do) je obavezno!");
+        }
 
         KlijentEntity klijent = new KlijentEntity();
         klijent.setKorisnickoIme(dto.getKorisnickoIme());
@@ -87,6 +94,9 @@ public class AuthService {
         klijent.setUloga("KLIJENT");
         klijent.setAktiviran(false);
         klijent.setNazivObjekta(dto.getNazivObjekta().trim());
+        klijent.setAdresa(dto.getAdresa().trim());
+        klijent.setRadnoVrijemeOd(dto.getRadnoVrijemeOd().trim());
+        klijent.setRadnoVrijemeDo(dto.getRadnoVrijemeDo().trim());
 
         if (dto.getOpis() != null && !dto.getOpis().isBlank()) {
             OpisEntity opis = new OpisEntity();

@@ -11,4 +11,7 @@ public class RegistracijaKlijentaDTO {
     private String email;
     private String nazivObjekta;
     private String opis;
+    private String adresa;
+    private String radnoVrijemeOd;
+    private String radnoVrijemeDo;
 }
