@@ -52,12 +52,6 @@ public class NarudzbaEntity {
     @org.hibernate.annotations.BatchSize(size = 50)
     private List<StavkaNarudzbeEntity> stavke = new ArrayList<>();
 
-    @Column(name = "id_ponude", nullable = true)
-    private Integer idPonude;
-
-    @Column(name = "id_klijenta", nullable = true)
-    private Integer idKlijenta;
-
     @Column(name = "ukupna_cijena")
     private BigDecimal ukupnaCijena;
 
@@ -67,7 +61,7 @@ public class NarudzbaEntity {
     @Column(name = "adresa_dostave")
     private String adresaDostave;
 
-    @Column(name = "vrijeme_i_datum", insertable = false, updatable = false)
+    @Column(name = "vrijeme_i_datum", updatable = false)
     private LocalDateTime vrijemeIDatum;
 
     @Column(name = "pin", length = 4)
@@ -94,6 +88,11 @@ public class NarudzbaEntity {
 
             this.status = "KREIRANA";
         }
+
+        if (vrijemeIDatum == null) {
+            vrijemeIDatum = LocalDateTime.now();
+        }
+
     }
     // Dodajte na dno klase NarudzbaEntity.java:
     @com.fasterxml.jackson.annotation.JsonProperty("restoranId")

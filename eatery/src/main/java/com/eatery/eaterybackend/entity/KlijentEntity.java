@@ -11,7 +11,7 @@ import lombok.Setter;
 @PrimaryKeyJoinColumn(name = "id_korisnika")
 @Getter
 @Setter
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "sifra", "slika"})
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "sifra"})
 public class KlijentEntity extends KorisnikEntity {
 
     @Column(name = "naziv_objekta", nullable = false)
