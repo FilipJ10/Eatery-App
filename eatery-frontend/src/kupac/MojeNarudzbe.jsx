@@ -337,11 +337,6 @@ const MojeNarudzbe = ({ kupacId, onNovaNarudzba }) => {
                                     </div>
 
                                     <div className="customer-order-footer-right">
-                                        <div className="customer-order-price-chip">
-                                            <span>Ukupno</span>
-                                            <strong>{Number(n.ukupnaCijena || 0).toFixed(2)} KM</strong>
-                                        </div>
-
                                         {isZavrseno && (
                                             isVecOcjenjeno ? (
                                                 <span className="badge-rated">
@@ -365,6 +360,11 @@ const MojeNarudzbe = ({ kupacId, onNovaNarudzba }) => {
                                                 </button>
                                             )
                                         )}
+
+                                        <div className="customer-order-price-chip">
+                                            <span>Ukupno</span>
+                                            <strong>{Number(n.ukupnaCijena || 0).toFixed(2)} KM</strong>
+                                        </div>
                                     </div>
                                 </div>
 
