@@ -193,7 +193,7 @@ const RestoranPanel = ({ restoranId, user, onLogout }) => {
     const prikazaneSifre = neobavijestene
       .map((narudzba) => narudzba.sifra || narudzba.id || narudzba.narudzbaId)
       .filter(Boolean)
-      .map((sifra) => `#${sifra}`)
+      .map((sifra) => (String(sifra).startsWith("#") ? String(sifra) : `#${sifra}`))
       .join(", ");
     const broj = neobavijestene.length;
     setNotifikacija({
@@ -1186,7 +1186,7 @@ const RestoranPanel = ({ restoranId, user, onLogout }) => {
                       <div className="home-order-topline">
                         <div className="home-order-reference">
                           <span>NARUDŽBA</span>
-                          <strong>#{narudzba.id}</strong>
+                          <strong>{narudzba.sifra || `#${narudzba.id}`}</strong>
                           <span className="home-order-status">
                             {(narudzba.status || "Zaprimljeno").replaceAll(
                               "_",
@@ -1533,7 +1533,7 @@ const RestoranPanel = ({ restoranId, user, onLogout }) => {
                         <div className="order-card-header">
                           <div>
                             <span className="order-number-label">NARUDŽBA</span>
-                            <h3>#{n.id}</h3>
+                            <h3>{n.sifra || `#${n.id}`}</h3>
                           </div>
 
                           <div className={`order-status ${statusBoja}`}>

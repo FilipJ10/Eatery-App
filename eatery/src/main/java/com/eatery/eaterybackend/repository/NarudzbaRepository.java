@@ -40,22 +40,24 @@ public interface NarudzbaRepository extends JpaRepository<NarudzbaEntity, Long> 
 
     @Query(value = "SELECT COALESCE(SUM(sn.kolicina), 0) " +
             "FROM stavka_narudzbe sn " +
-            "WHERE sn.id_narudzbe IN (" +
-            "    SELECT n.id_narudzbe FROM narudzba n " +
-            "    WHERE n.id_kupca = :kupacId " +
-            "    AND UPPER(n.status) IN ('DOSTAVLJENO', 'ZAVRSENO', 'ZAVRŠENO', 'ISPORUCENO', 'PREUZETO')" +
-            ")",
+            "JOIN narudzba n ON n.id_narudzbe = sn.id_narudzbe " +
+            "WHERE n.id_kupca = :kupacId " +
+            "AND UPPER(COALESCE(sn.tip_stavke, '')) = 'VRECICA' " +
+            "AND UPPER(n.status) IN ('DOSTAVLJENO', 'ZAVRSENO', 'ZAVRŠENO', 'ISPORUCENO', 'PREUZETO')",
             nativeQuery = true)
     Long prebrojVrecicePoKupcu(@Param("kupacId") Long kupacId);
 
+    /** Broj postojećih narudžbi restorana (za redni broj šifre unutar restorana). */
+    @Query("SELECT COUNT(n) FROM NarudzbaEntity n WHERE n.restoran.id = :restoranId")
+    long brojNarudzbiRestorana(@Param("restoranId") Long restoranId);
+
     @Query(value = "SELECT COALESCE(SUM((COALESCE(vi.originalna_cijena, 0) - COALESCE(vi.akcijska_cijena, 0)) * sn.kolicina), 0) " +
             "FROM stavka_narudzbe sn " +
+            "JOIN narudzba n ON n.id_narudzbe = sn.id_narudzbe " +
             "JOIN vrecica_iznenadjenja vi ON sn.id_jela = vi.id_vrecice " +
-            "WHERE sn.id_narudzbe IN (" +
-            "    SELECT n.id_narudzbe FROM narudzba n " +
-            "    WHERE n.id_kupca = :kupacId " +
-            "    AND UPPER(n.status) IN ('DOSTAVLJENO', 'ZAVRSENO', 'ZAVRŠENO', 'ISPORUCENO', 'PREUZETO')" +
-            ")",
+            "WHERE n.id_kupca = :kupacId " +
+            "AND UPPER(COALESCE(sn.tip_stavke, '')) = 'VRECICA' " +
+            "AND UPPER(n.status) IN ('DOSTAVLJENO', 'ZAVRSENO', 'ZAVRŠENO', 'ISPORUCENO', 'PREUZETO')",
             nativeQuery = true)
     BigDecimal izracunajUsteduPoKupcu(@Param("kupacId") Long kupacId);
 

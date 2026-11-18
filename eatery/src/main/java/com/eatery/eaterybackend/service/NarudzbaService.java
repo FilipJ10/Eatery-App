@@ -111,7 +111,8 @@ public class NarudzbaService {
         narudzba.setAdresaDostave(dto.getAdresaDostave());
         narudzba.setUkupnaCijena(dto.getUkupnaCijena());
         narudzba.setStatus("KREIRANA");
-        narudzba.setSifra("ORD-" + System.currentTimeMillis());
+        long redni = narudzbaRepository.brojNarudzbiRestorana(dto.getRestoranId()) + 1;
+        narudzba.setSifra("#NAR-" + redni);
 
         PreuzimanjeVreciceService.Termin termin = rezultatTermina.termin();
         if (termin != null) {
@@ -238,7 +239,7 @@ public class NarudzbaService {
         }
 
         if (narudzba.getSifra() == null || narudzba.getSifra().isEmpty()) {
-            narudzba.setSifra("ORD-" + System.currentTimeMillis());
+            narudzba.setSifra("NAR-" + System.currentTimeMillis());
         }
         narudzba.setStatus(noviStatus);
         narudzbaRepository.save(narudzba);
